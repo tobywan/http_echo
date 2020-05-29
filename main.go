@@ -9,30 +9,28 @@ import (
 
 // Audit is a simple record that something happened
 type Audit struct {
-	Utc         string `json:"utc" xml:"utc"`
-	Path        string `json:"path" xml:"path"`
-	Fingerprint string `json:"fingerprint" xml:"fingerprint"`
+	UTC           string `json:"utc" xml:"utc"`
+	URI           string `json:"path" xml:"path"`
+	HeaderBodyMD5 string `json:"header_body_md5" xml:"header_body_md5"`
+	HeaderStatus  string `json:"header_status" xml:"header_status"`
 }
 
 func main() {
 	e := echo.New()
-	e.GET("/one", func(c echo.Context) error {
-		f := c.Request().Header.Get("X-Fingerprint")
-		a := &Audit{
-			Utc:         time.Time.Format(time.Now(), "2006-01-02 15:04:05.000"),
-			Path:        "/one",
-			Fingerprint: f,
-		}
-		return c.JSON(http.StatusOK, a)
-	})
-	e.GET("/two", func(c echo.Context) error {
-		f := c.Request().Header.Get("X-Fingerprint")
-		a := &Audit{
-			Utc:         time.Time.Format(time.Now(), "2006-01-02 15:04:05.000"),
-			Path:        "/two",
-			Fingerprint: f,
-		}
-		return c.JSON(http.StatusOK, a)
-	})
+	e.GET("/one/*", serveJSON)
+	e.GET("/two/*", serveJSON)
 	e.Logger.Fatal(e.Start(":8181"))
+}
+func serveJSON(c echo.Context) error {
+	r := c.Request()
+	b := r.Header.Get("X-Body-MD5")
+	s := r.Header.Get("X-Status")
+	u := r.RequestURI
+	a := &Audit{
+		UTC:           time.Time.Format(time.Now(), "2006-01-02 15:04:05.000"),
+		URI:           u,
+		HeaderBodyMD5: b,
+		HeaderStatus:  s,
+	}
+	return c.JSON(http.StatusOK, a)
 }
