@@ -1,7 +1,10 @@
 package main
 
 import (
+	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/labstack/echo"
@@ -16,10 +19,14 @@ type Audit struct {
 }
 
 func main() {
+	args := os.Args[1:]
+	if len(args) != 1 {
+		log.Fatal("Pass the port as the only argument")
+	}
 	e := echo.New()
-	e.GET("/one/*", serveJSON)
-	e.GET("/two/*", serveJSON)
-	e.Logger.Fatal(e.Start(":8181"))
+	e.GET("/*", serveJSON)
+	p := fmt.Sprintf(":%s", args[0])
+	e.Logger.Fatal(e.Start(p))
 }
 func serveJSON(c echo.Context) error {
 	r := c.Request()
@@ -32,5 +39,6 @@ func serveJSON(c echo.Context) error {
 		HeaderBodyMD5: b,
 		HeaderStatus:  s,
 	}
+	log.Println(u)
 	return c.JSON(http.StatusOK, a)
 }
